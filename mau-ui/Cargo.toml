@@ -1,0 +1,16 @@
+[package]
+name = "mau-ui"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["opengl"]
+opengl = ["mau-renderer-opengl"]
+
+[dependencies]
+instant = "0.1.12"
+
+mau-renderer = { path = "../mau-renderer" }
+mau-renderer-opengl = { path = "../mau-renderer-opengl", optional = true }
+paws = "0.3.3"
+serde = "1.0.143"
