@@ -36,6 +36,9 @@ pub trait AppConfig: DeserializeOwned + Serialize + Default {
     /// Returns the window config.
     fn window_config(&self) -> &Option<WindowConfig>;
 
+    /// Returns a mutable reference to the window config.
+    fn window_config_mut(&mut self) -> &mut Option<WindowConfig>;
+
     /// Returns the path to the application's config directory.
     fn config_dir() -> PathBuf {
         let project_dirs = ProjectDirs::from("", "", Self::app_name())
@@ -82,108 +85,17 @@ pub trait AppConfig: DeserializeOwned + Serialize + Default {
         std::fs::write(&config_file, toml::to_string(self)?)?;
         Ok(())
     }
-}
 
-/// Defines a module with a thread-local config variable that automatically saves the config file
-/// upon write.
-///
-/// After the module is declared by this macro, all of its inner symbols should be reexported into
-/// the current scope if you wish for the module to be public, like so:
-/// ```
-/// mau::config_module!(MyConfig, tls);
-/// pub use tls::*;
-/// ```
-#[macro_export]
-macro_rules! config_module {
-    ($T:tt, $modname:tt) => {
-        mod $modname {
-            use once_cell::sync::OnceCell;
-            use std::sync::RwLock;
-            use std::sync::RwLockReadGuard;
-
-            use $crate::config::AppConfig;
-
-            use super::$T;
-
-            static CONFIG: OnceCell<RwLock<$T>> = OnceCell::new();
-
-            /// Loads or creates the user config.
-            pub fn load_or_create() -> Result<(), $crate::ConfigError> {
-                let config = <$T as $crate::config::AppConfig>::load_or_create()?;
-                if CONFIG.set(RwLock::new(config)).is_err() {
-                    return Err($crate::ConfigError::ConfigIsAlreadyLoaded);
-                }
-                Ok(())
-            }
-
-            /// Saves the user config.
-            pub fn save() -> Result<(), $crate::ConfigError> {
-                <$T as $crate::config::AppConfig>::save(&config())
-            }
-
-            /// Reads from the user config.
-            pub fn config() -> RwLockReadGuard<'static, $T> {
-                CONFIG
-                    .get()
-                    .expect("attempt to read config without loading it")
-                    .read()
-                    .unwrap()
-            }
-
-            /// Writes to the user config. After the closure is done running, saves the user config to the disk.
-            pub fn write(f: impl FnOnce(&mut $T)) {
-                {
-                    let mut config = CONFIG
-                        .get()
-                        .expect("attempt to write config without loading it")
-                        .write()
-                        .unwrap();
-                    f(&mut config);
-                }
-                match save() {
-                    Ok(_) => (),
-                    Err(error) => {
-                        log::error!("cannot save config: {}", error);
-                    }
-                }
-            }
-        }
-    };
-}
-
-#[allow(unused)]
-mod test {
-    use super::*;
-
-    #[derive(Deserialize, Serialize)]
-    pub struct MyConfig {
-        language: String,
-        window: Option<WindowConfig>,
-    }
-
-    impl Default for MyConfig {
-        fn default() -> Self {
-            Self {
-                language: "en-US".to_string(),
-                window: None,
-            }
+    /// Writes values to the config and then saves it. This is recommended over using `save()`
+    /// manually when you want to modify the config.
+    ///
+    /// Note that this function, unlike `save()` is infallible. Instead it simply logs the error
+    /// on failure.
+    fn write(&mut self, f: impl FnOnce(&mut Self)) {
+        f(self);
+        if let Err(error) = self.save() {
+            // TODO: Global error bus
+            log::error!("error while saving config: {error}");
         }
     }
-
-    impl AppConfig for MyConfig {
-        fn app_name() -> &'static str {
-            "MyApp"
-        }
-
-        fn language(&self) -> &str {
-            &self.language
-        }
-
-        fn window_config(&self) -> &Option<WindowConfig> {
-            &self.window
-        }
-    }
-
-    config_module!(MyConfig, tls);
-    use tls::*;
 }

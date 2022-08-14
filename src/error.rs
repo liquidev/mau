@@ -2,13 +2,17 @@
 
 use thiserror::Error;
 
+// TODO: i18n support for all of this
+
 /// An error during the app's lifetime.
 #[derive(Debug, Error)]
 pub enum Error {
+    #[error("Config error: {0}")]
+    Config(#[from] ConfigError),
     #[error("Backend error: {0}")]
-    Backend(mau_ui::backend::Error),
+    Backend(#[from] mau_ui::backend::Error),
     #[error("Clipboard error: {0}")]
-    Clipboard(ClipboardError),
+    Clipboard(#[from] ClipboardError),
 }
 
 /// An error while loading or saving the app's config file.

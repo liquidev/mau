@@ -32,3 +32,4 @@ image = { version = "0.24.3", default-features = false }
 
 mau-i18n = { path = "mau-i18n" }
 mau-ui = { path = "mau-ui" }
+arrayvec = "0.7.2"
