@@ -5,6 +5,10 @@ pub trait FromLanguageKey {
     fn from_language_key(language: &Language, key: &str) -> Self;
 }
 
+impl FromLanguageKey for () {
+    fn from_language_key(_language: &Language, _key: &str) -> Self {}
+}
+
 /// Extracts non-formatted strings from languages.
 impl FromLanguageKey for String {
     fn from_language_key(language: &Language, key: &str) -> Self {

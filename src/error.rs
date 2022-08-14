@@ -60,3 +60,11 @@ impl From<arboard::Error> for ClipboardError {
         }
     }
 }
+
+#[derive(Debug, Error)]
+pub enum LanguageError {
+    #[error("No translations available for language {0}")]
+    NoTranslations(String),
+    #[error("Language {0} has an invalid FTL translation file")]
+    InvalidFTL(String),
+}

@@ -5,6 +5,9 @@ struct App;
 
 impl mau::AppSetup for App {
     type Config = Config;
+
+    type LanguageMap = ();
+    type Strings = ();
 }
 
 #[derive(Deserialize, Serialize)]
@@ -45,15 +48,24 @@ struct State;
 type AppContext<'a> = mau::AppContext<'a, App>;
 
 impl mau::AppState<App> for State {
-    fn process(&mut self, cx: AppContext) {
+    type Error = ();
+
+    fn process(&mut self, cx: AppContext) -> Result<(), Self::Error> {
         cx.ui.fill(paws::rgb(0, 0, 255));
+        Ok(())
     }
 
-    fn next_state(self: Box<Self>, renderer: &mut mau::ui::Backend) -> Box<dyn mau::AppState<App>> {
-        self
+    fn next_state(
+        self: Box<Self>,
+        _renderer: &mut mau::ui::Backend,
+    ) -> Result<Box<dyn mau::AppState<App, Error = Self::Error>>, Self::Error> {
+        Ok(self)
     }
 }
 
 fn main() {
-    mau::run(State)
+    mau::App::build()
+        .default_window_size((800, 600))
+        .init_state::<_, _, ()>(|| Ok(State))
+        .run()
 }

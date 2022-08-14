@@ -11,6 +11,13 @@ pub trait TranslateEnumAttribute {
     fn translate_attribute(&self, language: &Language, message: Option<&str>) -> String;
 }
 
+/// Implementation for quick and dirty prototyping, for when app state methods do not fail.
+impl TranslateEnumAttribute for () {
+    fn translate_attribute(&self, _language: &Language, _message: Option<&str>) -> String {
+        "()".to_string()
+    }
+}
+
 /// Translating enums. This is implemented automatically for all enums that implement
 /// `TranslateEnumAttribute`.
 pub trait TranslateEnum {

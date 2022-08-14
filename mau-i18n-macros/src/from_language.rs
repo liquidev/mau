@@ -44,10 +44,10 @@ fn implement_trait(typ: &Ident, fields: &FieldPairs) -> Result<TokenStream, Erro
         let name_string = snake_case_to_kebab_case(&name.to_string());
         let name_string = Literal::string(&name_string);
         let value = quote!(
-           <#typ as ::mau_i18n::from_language::FromLanguageKey>::from_language_key(
-              #language,
-              &format!("{}{}", #prefixed_key, #name_string),
-           )
+            <#typ as ::mau_i18n::from_language::FromLanguageKey>::from_language_key(
+                #language,
+                &format!("{}{}", #prefixed_key, #name_string),
+            )
         );
         ctor_fields.push(FieldValue {
             attrs: Vec::new(),
@@ -58,15 +58,15 @@ fn implement_trait(typ: &Ident, fields: &FieldPairs) -> Result<TokenStream, Erro
     }
 
     Ok(quote! {
-       impl ::mau_i18n::from_language::FromLanguageKey for #typ {
-          fn from_language_key(#language: &::mau_i18n::Language, #key: &str) -> Self {
-             let #prefixed_key = if #key.is_empty() {
-                "".to_owned()
-             } else {
-                format!("{}.", #key)
-             };
-             #typ { #ctor_fields }
-          }
-       }
+        impl ::mau_i18n::from_language::FromLanguageKey for #typ {
+            fn from_language_key(#language: &::mau_i18n::Language, #key: &str) -> Self {
+                let #prefixed_key = if #key.is_empty() {
+                    "".to_owned()
+                } else {
+                    format!("{}.", #key)
+                };
+                #typ { #ctor_fields }
+            }
+        }
     })
 }
